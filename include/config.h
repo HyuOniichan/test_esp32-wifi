@@ -9,4 +9,7 @@
 #define AP_SSID "ESP32_WebServer"
 #define AP_PASS "hoendoimi"
 
+// Config MAC Spoofing address
+#define MAC_SPOOFING_ADDRESS "02:11:22:33:44:55"
+
 #endif

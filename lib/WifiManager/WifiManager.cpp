@@ -53,6 +53,10 @@ void WifiManager::begin() {
     switch (_wifiMode) {
         case MODE_STA:
             WiFi.mode(WIFI_STA);
+
+            // MAC Spoofing
+            setMacAddress(MAC_SPOOFING_ADDRESS);
+
             if (retryConnection(MODE_STA)) Serial.println("Starting STA mode...");
                 else Serial.println("Failed to start STA mode...");
             break;
@@ -65,6 +69,10 @@ void WifiManager::begin() {
             
         case MODE_BOTH:
             WiFi.mode(WIFI_AP_STA);
+            
+            // MAC Spoofing for STA mode
+            setMacAddress(MAC_SPOOFING_ADDRESS);
+
             if (retryConnection(MODE_AP)) Serial.println("Starting AP mode...");
                 else Serial.println("Failed to start AP mode...");
             if (retryConnection(MODE_STA)) Serial.println("Starting STA mode...");
@@ -119,6 +127,32 @@ bool WifiManager::checkConnection(WifiMode mode) {
     return false;
 }
 
+void WifiManager::setMacAddress(const char* macAddress) {
+    // MAC Spoofing supports only STA mode for now
+    if (!(_wifiMode == MODE_STA || _wifiMode == MODE_BOTH)) return;
+
+    // Check MAC address format
+    if (sscanf(
+        macAddress, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", 
+        &_mac_values[0], &_mac_values[1], &_mac_values[2], 
+        &_mac_values[3], &_mac_values[4], &_mac_values[5]
+    ) != 6) {
+        Serial.println("Wrong MAC address format");
+        return;
+    }
+    
+    // Set new MAC address
+    esp_err_t err = esp_wifi_set_mac(WIFI_IF_STA, _mac_values);
+    
+    if (err != ESP_OK) {
+        Serial.println("Failed to set MAC address");
+        return;
+    }
+
+    // Debug
+    Serial.println("MAC Spoofing done");
+}
+
 void WifiManager::logStatus() {
     Serial.println("--- Network Status");
     
@@ -131,6 +165,10 @@ void WifiManager::logStatus() {
     if (_wifiMode == MODE_STA || _wifiMode == MODE_BOTH) {
         Serial.print("STA IP: ");
         Serial.print(WiFi.localIP());
+        Serial.println();
+
+        Serial.print("MAC address: ");
+        Serial.print(WiFi.macAddress());
         Serial.println();
     }
 }

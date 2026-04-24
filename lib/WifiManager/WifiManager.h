@@ -2,6 +2,7 @@
 #define WIFI_MANAGER_H
 
 #include <WiFi.h>
+#include <esp_wifi.h>
 #include "ConfigManager.h"
 #include "config.h"
 
@@ -12,6 +13,8 @@ private:
     char _sta_pass[CREDENTIAL_BUFFER_SIZE];
     char _ap_ssid[CREDENTIAL_BUFFER_SIZE];
     char _ap_pass[CREDENTIAL_BUFFER_SIZE];
+
+    uint8_t _mac_values[6];
 
     unsigned long _lastCheckConn = 0;
     unsigned long _lastRetryConn = 0;
@@ -33,6 +36,9 @@ public:
 
     // Check if Wifi connected
     bool checkConnection(WifiMode mode);
+
+    // MAC Spoofing
+    void setMacAddress(const char* macAddress);
 
     // Log Wifi status
     void logStatus();
