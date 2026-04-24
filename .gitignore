@@ -1,0 +1,18 @@
+# PIO build files
+.pio
+
+# VS Code config
+.vscode
+
+# Compiled binary
+*.bin
+*.elf
+*.map
+
+# Log / Temp files
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+

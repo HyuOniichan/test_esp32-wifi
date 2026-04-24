@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>ESP32 Config</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h2>WiFi Config</h2>
+
+        <label>Mode</label>
+        <select id="selectMode">
+            <option value="STA">STA</option>
+            <option value="AP">AP</option>
+            <option value="DUAL">DUAL</option>
+        </select>
+
+        <label>WiFi Name (SSID)</label>
+        <input type="text" id="ssidInput" placeholder="Enter WiFi name">
+
+        <label>Password</label>
+        <input type="password" id="passInput" placeholder="Enter password">
+
+        <button onclick="connectWiFi()">Connect</button>
+
+    </div>
+
+    <script src="/app.js"></script>
+
+</body>
+
+</html>
