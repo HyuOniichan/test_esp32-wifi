@@ -31,6 +31,7 @@ inline const char* mapConfigTypeToNamespace(ConfigType type) {
 
 // --- WifiManager
 #define CREDENTIAL_BUFFER_SIZE 32
+#define MAC_ADDRESS_BUFFER_SIZE 18
 #define RECONNECT_INTERVAL 2000 // 1s
 
 // uint8 -> avoid changing size later
@@ -47,6 +48,7 @@ struct WifiConfigType {
     // use char instead of String (a pointer)
     char ssid[CREDENTIAL_BUFFER_SIZE];
     char pass[CREDENTIAL_BUFFER_SIZE];
+    char macAddress[MAC_ADDRESS_BUFFER_SIZE];
 };
 
 
@@ -67,6 +69,7 @@ T generateDefaultConfig(ConfigType type) {
             config.wifiMode = MODE_AP;
             strlcpy(config.ssid, AP_SSID, sizeof(config.ssid));
             strlcpy(config.pass, AP_PASS, sizeof(config.pass));
+            strlcpy(config.macAddress, MAC_SPOOFING_ADDRESS, sizeof(config.macAddress));
             return config;
     }
     return T{};

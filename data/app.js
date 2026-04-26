@@ -2,14 +2,20 @@ function connectWiFi() {
 	const mode = document.getElementById("selectMode").value;
 	const ssid = document.getElementById("ssidInput").value;
 	const pass = document.getElementById("passInput").value;
+	const mac = document.getElementById("macInput").value;
 
-	alert("Mode: " + mode + "\nSSID: " + ssid + "\nPassword: " + pass);
+	alert(
+		"Mode: " + mode 
+		+ "\nSSID: " + ssid 
+		+ "\nPassword: " + pass
+		+ "\nMAC Address: " + mac
+	);
 
 	// Send to ESP32 WebServer
 	fetch("/api/wifi", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ mode, ssid, pass }),
+		body: JSON.stringify({ mode, ssid, pass, mac }),
 	})
 		.then((res) => res.json())
 		.then((data) => {

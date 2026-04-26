@@ -17,27 +17,31 @@ WifiConfigType WifiManager::getCredentials(WifiMode mode) {
             // strlcpy -> used for string copy
             strlcpy(config.ssid, _sta_ssid, sizeof(config.ssid));
             strlcpy(config.pass, _sta_pass, sizeof(config.pass));
+            strlcpy(config.macAddress, _mac_address, sizeof(config.macAddress));
             break;
         case MODE_AP:
             strlcpy(config.ssid, _ap_ssid, sizeof(config.ssid));
             strlcpy(config.pass, _ap_pass, sizeof(config.pass));
+            strlcpy(config.macAddress, _mac_address, sizeof(config.macAddress));
             break;
     }
     
     return config;
 }
 
-void WifiManager::setCredentials(WifiMode mode, const char* ssid, const char* pass) {
-    _wifiMode = mode;
+void WifiManager::setCredentials(WifiConfigType wifiConfig) {
+    _wifiMode = wifiConfig.wifiMode;
 
-    switch (mode) {
+    switch (_wifiMode) {
         case MODE_STA:
-            strlcpy(_sta_ssid, ssid, sizeof(_sta_ssid));
-            strlcpy(_sta_pass, pass, sizeof(_sta_pass));
+            strlcpy(_sta_ssid, wifiConfig.ssid, sizeof(_sta_ssid));
+            strlcpy(_sta_pass, wifiConfig.pass, sizeof(_sta_pass));
+            strlcpy(_mac_address, wifiConfig.macAddress, sizeof(_mac_address));
             break;
         case MODE_AP:
-            strlcpy(_ap_ssid, ssid, sizeof(_ap_ssid));
-            strlcpy(_ap_pass, pass, sizeof(_ap_pass));
+            strlcpy(_ap_ssid, wifiConfig.ssid, sizeof(_ap_ssid));
+            strlcpy(_ap_pass, wifiConfig.pass, sizeof(_ap_pass));
+            strlcpy(_mac_address, wifiConfig.macAddress, sizeof(_mac_address));
             break;
     }
 }
@@ -94,8 +98,7 @@ void WifiManager::begin() {
     WifiConfigType cfg = config.wifiConfig;
 
     // Set credentials
-    setCredentials(cfg.wifiMode, cfg.ssid, cfg.pass);
-    _wifiMode = cfg.wifiMode;
+    setCredentials(cfg);
 
     // Listen to event
     WiFi.onEvent(WifiEvent);
@@ -106,7 +109,7 @@ void WifiManager::begin() {
             WiFi.mode(WIFI_STA);
 
             // MAC Spoofing
-            setMacAddress(MAC_SPOOFING_ADDRESS);
+            setMacAddress(_mac_address);
 
             WiFi.begin(_sta_ssid, _sta_pass);
 
@@ -121,7 +124,7 @@ void WifiManager::begin() {
             WiFi.mode(WIFI_AP_STA);
             
             // MAC Spoofing for STA mode
-            setMacAddress(MAC_SPOOFING_ADDRESS);
+            setMacAddress(_mac_address);
             
             WiFi.begin(_sta_ssid, _sta_pass);
             WiFi.softAP(_ap_ssid, _ap_pass);
@@ -153,7 +156,7 @@ void WifiManager::setMacAddress(const char* macAddress) {
         &_mac_values[0], &_mac_values[1], &_mac_values[2], 
         &_mac_values[3], &_mac_values[4], &_mac_values[5]
     ) != 6) {
-        Serial.println("Wrong MAC address format");
+        Serial.println("[DEBUG] Wrong MAC address format");
         return;
     }
     
@@ -161,7 +164,7 @@ void WifiManager::setMacAddress(const char* macAddress) {
     esp_err_t err = esp_wifi_set_mac(WIFI_IF_STA, _mac_values);
     
     if (err != ESP_OK) {
-        Serial.println("Failed to set MAC address");
+        Serial.println("[DEBUG] Failed to set MAC address");
         return;
     }
 

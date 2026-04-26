@@ -34,7 +34,9 @@ void ServerManager::begin() {
     _server.begin();
     _isRunning = true;
 
-    Serial.println("Webserver is running.");
+    // Support only AP mode for now
+    Serial.print("[AP] SSID: ");
+    Serial.println(config.wifiConfig.ssid);
 }
 
 void ServerManager::handleClient() {
@@ -118,6 +120,9 @@ void ServerManager::_handlePostWifi() {
     // Parse Json and check error
     DeserializationError err = deserializeJson(doc, body);
     if (err) {
+        Serial.print("[ERROR] JSON parse failed: ");
+        Serial.println(err.c_str());
+
         _server.send(400, "application/json", "{\"status\":\"json_error\"}");
         return;
     }
@@ -134,6 +139,14 @@ void ServerManager::_handlePostWifi() {
 
     strlcpy(config.ssid, doc["ssid"] | "", sizeof(config.ssid));
     strlcpy(config.pass, doc["pass"] | "", sizeof(config.pass));
+    strlcpy(config.macAddress, doc["mac"] | "", sizeof(config.macAddress));
+    
+    // Debug
+    Serial.println("[DEBUG] POST /api/wifi");
+    Serial.print("    SSID: ");
+    Serial.println(config.ssid);
+    Serial.print("    MAC Address: ");
+    Serial.println(config.macAddress);
 
     // Save config
     configManager.updateConfig<WifiConfigType>(config, CONFIG_TYPE_WIFI);
