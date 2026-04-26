@@ -15,7 +15,7 @@ void ServerManager::begin() {
     WifiMode wifiMode = config.wifiConfig.wifiMode;
 
     if (!(wifiMode == MODE_AP || wifiMode == MODE_BOTH)) {
-        Serial.println("Not in AP mode, turn off webserver.");
+        Serial.println("[DEBUG] Not in AP mode, turn off webserver.");
         return;
     }
 

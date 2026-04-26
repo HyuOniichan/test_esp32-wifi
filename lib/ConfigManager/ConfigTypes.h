@@ -31,8 +31,7 @@ inline const char* mapConfigTypeToNamespace(ConfigType type) {
 
 // --- WifiManager
 #define CREDENTIAL_BUFFER_SIZE 32
-#define CHECK_CONNECTION_INTERVAL 10000 // 10s
-#define RETRY_CONNECTION_INTERVAL 1000 // 1s
+#define RECONNECT_INTERVAL 2000 // 1s
 
 // uint8 -> avoid changing size later
 enum WifiMode: uint8_t {

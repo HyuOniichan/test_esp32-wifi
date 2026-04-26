@@ -1,5 +1,7 @@
 #include "WifiManager.h"
 
+static unsigned long _lastReconnectAttempt = 0;
+
 WifiManager::WifiManager() {
     // Default mode
     WifiConfigType cfg = generateDefaultConfig<WifiConfigType>(CONFIG_TYPE_WIFI);
@@ -40,6 +42,52 @@ void WifiManager::setCredentials(WifiMode mode, const char* ssid, const char* pa
     }
 }
 
+void WifiManager::WifiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
+    switch (event) {
+        // STA mode
+        case ARDUINO_EVENT_WIFI_STA_START:
+            Serial.println("[STA] Starting...");
+            break;
+        case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+            Serial.println("[STA] Connected");
+            break;
+        case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+            Serial.print("[STA] IP address: ");
+            Serial.println(WiFi.localIP());
+            Serial.print("[STA] MAC address: ");
+            Serial.println(WiFi.macAddress());
+            break;
+        case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
+            // Handle reconnect
+            Serial.println("[STA] Disconnected");
+            
+            // Define variable -> Put in a block
+            unsigned long cur = millis();
+            if (cur - _lastReconnectAttempt >= RECONNECT_INTERVAL) {
+                Serial.println("[STA] Reconnecting...");
+                WiFi.reconnect();
+                _lastReconnectAttempt = cur;
+            }
+
+            break;
+        }
+        
+        // AP mode
+        case ARDUINO_EVENT_WIFI_AP_START:
+            Serial.println("[AP] Starting...");
+            Serial.print("[AP] IP address: ");
+            Serial.println(WiFi.softAPIP());
+            break;
+            
+        case ARDUINO_EVENT_WIFI_AP_STOP:
+            Serial.println("[AP] Stopped");
+            break;
+
+        default:
+            break;
+    }
+}
+
 void WifiManager::begin() {
     // Get config
     GeneralConfigType config = configManager.getConfig();
@@ -48,6 +96,9 @@ void WifiManager::begin() {
     // Set credentials
     setCredentials(cfg.wifiMode, cfg.ssid, cfg.pass);
     _wifiMode = cfg.wifiMode;
+
+    // Listen to event
+    WiFi.onEvent(WifiEvent);
     
     // Check for mode to begin
     switch (_wifiMode) {
@@ -57,14 +108,13 @@ void WifiManager::begin() {
             // MAC Spoofing
             setMacAddress(MAC_SPOOFING_ADDRESS);
 
-            if (retryConnection(MODE_STA)) Serial.println("Starting STA mode...");
-                else Serial.println("Failed to start STA mode...");
+            WiFi.begin(_sta_ssid, _sta_pass);
+
             break;
             
         case MODE_AP:
             WiFi.mode(WIFI_AP);
-            if (retryConnection(MODE_AP)) Serial.println("Starting AP mode...");
-                else Serial.println("Failed to start AP mode...");
+            WiFi.softAP(_ap_ssid, _ap_pass);
             break;
             
         case MODE_BOTH:
@@ -72,46 +122,12 @@ void WifiManager::begin() {
             
             // MAC Spoofing for STA mode
             setMacAddress(MAC_SPOOFING_ADDRESS);
+            
+            WiFi.begin(_sta_ssid, _sta_pass);
+            WiFi.softAP(_ap_ssid, _ap_pass);
 
-            if (retryConnection(MODE_AP)) Serial.println("Starting AP mode...");
-                else Serial.println("Failed to start AP mode...");
-            if (retryConnection(MODE_STA)) Serial.println("Starting STA mode...");
-                else Serial.println("Failed to start STA mode...");
             break;
     }
-}
-
-bool WifiManager::retryConnection(WifiMode mode) {
-    unsigned long start = millis();
-
-    while (millis() - start < CHECK_CONNECTION_INTERVAL) {
-        if (checkConnection(mode)) {
-            _lastCheckConn = millis();
-            return true;
-        }
-
-        if (millis() - _lastRetryConn >= RETRY_CONNECTION_INTERVAL) {
-            switch (mode) {
-                case MODE_STA:
-                    WiFi.begin(_sta_ssid, _sta_pass);
-                    break;
-                case MODE_AP:
-                    WiFi.softAP(_ap_ssid, _ap_pass); 
-                    break;
-                case MODE_BOTH:
-                    WiFi.begin(_sta_ssid, _sta_pass);
-                    WiFi.softAP(_ap_ssid, _ap_pass); 
-                    break;
-            }
-
-            _lastRetryConn = millis();
-        }
-        
-        // Prevent CPU spam
-        delay(100);
-    }
-
-    return false;
 }
 
 bool WifiManager::checkConnection(WifiMode mode) {
@@ -149,26 +165,6 @@ void WifiManager::setMacAddress(const char* macAddress) {
         return;
     }
 
-    // Debug
-    Serial.println("MAC Spoofing done");
-}
-
-void WifiManager::logStatus() {
-    Serial.println("--- Network Status");
-    
-    if (_wifiMode == MODE_AP || _wifiMode == MODE_BOTH) {
-        Serial.print("AP IP: ");
-        Serial.print(WiFi.softAPIP());
-        Serial.println();
-    }
-    
-    if (_wifiMode == MODE_STA || _wifiMode == MODE_BOTH) {
-        Serial.print("STA IP: ");
-        Serial.print(WiFi.localIP());
-        Serial.println();
-
-        Serial.print("MAC address: ");
-        Serial.print(WiFi.macAddress());
-        Serial.println();
-    }
+    // Support STA mode for now
+    Serial.println("[STA] MAC Spoofing done");
 }

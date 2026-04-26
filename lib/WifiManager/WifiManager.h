@@ -16,8 +16,8 @@ private:
 
     uint8_t _mac_values[6];
 
-    unsigned long _lastCheckConn = 0;
-    unsigned long _lastRetryConn = 0;
+    // Listen to event (event-driven) instead of while loop (polling)
+    static void WifiEvent(WiFiEvent_t event, WiFiEventInfo_t info);
 
 public:
     WifiManager();
@@ -30,18 +30,12 @@ public:
 
     // Begin Wifi connection
     void begin();
-    
-    // Retry connection in an defined interval
-    bool retryConnection(WifiMode mode);
 
     // Check if Wifi connected
     bool checkConnection(WifiMode mode);
 
     // MAC Spoofing
     void setMacAddress(const char* macAddress);
-
-    // Log Wifi status
-    void logStatus();
 };
 
 #endif

@@ -35,9 +35,6 @@ void setup() {
 
     // Webserver
     serverManager.begin();
-
-    // Log IP address
-    wifiManager.logStatus();
 }
 
 void loop() {
@@ -49,6 +46,7 @@ void loop() {
         config = configManager.getConfig();
     }
 
+    // LED debug
     digitalWrite(LED_BUILTIN, HIGH);
     delay(2000);
     digitalWrite(LED_BUILTIN, LOW);
