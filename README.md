@@ -23,8 +23,10 @@ graph TD
 
     %% apMode
     webServer[Start web server]
-    saveUserConfig["Save user config to Flash\n (wifi mode, ssid, pass)"]
+    saveUserConfig["Save config to Flash\n (wifi mode, ssid, pass)"]
     hardRestart["Hard restart ESP\n (EN button)"]
+    otaUpdate[OTA Update]
+    espRestart[ESP restart]
 
     %% staMode
     saveCredentials["Get ssid, pass\n from config"]
@@ -39,8 +41,11 @@ graph TD
     subgraph apMode["AP Mode"]
         direction TD 
         webServer
-            -- POST --> saveUserConfig
+            -- User Input --> saveUserConfig
             --> hardRestart
+        webServer
+            -- firmware.bin --> otaUpdate
+            --> espRestart
     end
 
     subgraph staMode["STA Mode"]
