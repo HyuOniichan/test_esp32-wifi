@@ -1,3 +1,5 @@
+// config_wifi
+// Send Wifi config
 function connectWiFi() {
 	const mode = document.getElementById("selectMode").value;
 	const ssid = document.getElementById("ssidInput").value;
@@ -23,6 +25,7 @@ function connectWiFi() {
 		});
 }
 
+// index.html
 // Fetch WiFi config from ESP32
 function refreshData() {
 	fetch("/api/wifi")
@@ -38,6 +41,38 @@ function refreshData() {
 			document.getElementById("ipText").innerText = "Error";
 		});
 }
+
+// upload_ota
+// Send source code OTA to ESP
+function uploadFirmware() {
+    let file = document.getElementById("otaFile").files[0];
+    let formData = new FormData();
+    formData.append("file", file);
+
+	// Maybe better for multipart upload
+    let xhr = new XMLHttpRequest();
+
+    xhr.open("POST", "/api/ota", true);
+
+    // progress
+    xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            let percent = (e.loaded / e.total) * 100;
+            document.getElementById("progress").value = percent;
+        }
+    };
+
+    xhr.onload = function() {
+        if (xhr.status == 200) {
+            alert("OTA success! Rebooting...");
+        } else {
+            alert("OTA failed");
+        }
+    };
+
+    xhr.send(formData);
+}
+
 
 // Auto load on page open
 refreshData();

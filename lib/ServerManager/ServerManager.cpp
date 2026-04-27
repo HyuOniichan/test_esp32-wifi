@@ -2,7 +2,9 @@
 
 WebServer ServerManager::_server(80);
 
+unsigned long bootTime = millis();
 bool ServerManager::_isRunning = false;
+bool ServerManager::_otaConfirmed = false;
 
 bool ServerManager::isRunning() {
     return _isRunning;
@@ -25,10 +27,16 @@ void ServerManager::begin() {
     // --- Render
     _server.on("/", _renderHome);
     _server.on("/config/wifi", _renderConfigWifi);
+    _server.on("/upload/ota", _renderUploadOta);
 
     // --- API
     _server.on("/api/wifi", HTTP_GET, _handleGetWifi);
     _server.on("/api/wifi", HTTP_POST, _handlePostWifi);
+
+    // --- OTA
+    // Action communication (instead of Service)
+    // Upload large file --> Send chunks till done
+    _server.on("/api/ota", HTTP_POST, _handlePostOtaResult, _handlePostOta);
 
     // Start server
     _server.begin();
@@ -43,6 +51,34 @@ void ServerManager::handleClient() {
     if (!_isRunning) return;
     _server.handleClient();
 }
+
+void ServerManager::confirmOta(bool isWifiOk) {
+    // Check if system healthy?
+    // Wait system to be stable
+    if (_otaConfirmed || (millis() - bootTime < OTA_CONFIRM_DELAY)) {
+        return;
+    }
+
+    // Check Wifi for now
+    if (!isWifiOk) {
+        Serial.println("[OTA] System isn't healthy, firmware confirm failed");
+        if (!_isRunning) {
+            // Server is running only in AP mode
+            // STA mode always return _isRunning == false
+        }
+        return;
+    }
+
+    // Confirm firmware
+    if (esp_ota_mark_app_valid_cancel_rollback() == ESP_OK) {
+        Serial.println("[OTA] Firmware valid");
+        _otaConfirmed = true;
+    } else {
+        Serial.println("[OTA] Firmware confirm failed");
+    }
+}
+
+
 
 // --- Static files
 void ServerManager::_serveStaticFiles() {
@@ -66,6 +102,8 @@ void ServerManager::_serveStaticFiles() {
         file.close();
     });
 }
+
+
 
 // --- Render pages
 void ServerManager::_renderHome() {
@@ -92,7 +130,21 @@ void ServerManager::_renderConfigWifi() {
     file.close();
 }
 
-// -- Handle APIs
+void ServerManager::_renderUploadOta() {
+    File file = LittleFS.open("/pages/upload_ota.html", "r");
+
+    if (!file) {
+        _server.send(500, "text/plain", "File not found");
+        return;
+    }
+
+    _server.streamFile(file, "text/html");
+    file.close();
+}
+
+
+
+// --- Handle APIs
 void ServerManager::_handleGetWifi() {
     // Take current config
     GeneralConfigType config = configManager.getConfig();
@@ -153,4 +205,55 @@ void ServerManager::_handlePostWifi() {
 
     // Response
     _server.send(200, "application/json", "{\"status\":\"ok\"}");
+}
+
+
+
+// --- OTA
+void ServerManager::_handlePostOta() {
+    HTTPUpload& upload = _server.upload();
+
+    switch (upload.status) {
+        case UPLOAD_FILE_START:
+            Serial.println("[OTA] Start uploading...");
+
+            // Prepare to write (choose app1)
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+                Update.printError(Serial);
+            }
+
+            break;
+
+        case UPLOAD_FILE_WRITE:
+            // Write each chunk (buf)
+            if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+                Update.printError(Serial);
+            }
+            break;
+
+        case UPLOAD_FILE_END:
+            // Verify
+            if (Update.end(true)) {
+                Serial.printf("[OTA] Write done: %u bytes\n", upload.totalSize);
+            } else {
+                Update.printError(Serial);
+            }
+            break;
+            
+        case UPLOAD_FILE_ABORTED:
+            Serial.println("[OTA] Canceled");
+            Update.end();
+            break;
+    }
+}
+
+void ServerManager::_handlePostOtaResult() {
+    // When all chunks written -> Send result
+    _server.send(200, "application/json", "{\"status\":\"ok\"}");
+
+    // Wait server to send response
+    delay(1000);
+
+    // Restart ESP32
+    ESP.restart();
 }

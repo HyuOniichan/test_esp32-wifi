@@ -53,6 +53,11 @@ struct WifiConfigType {
 
 
 
+// --- ServerManager
+#define OTA_CONFIRM_DELAY 2000
+
+
+
 // --- ConfigManager
 
 // General config type (wifi, ...)

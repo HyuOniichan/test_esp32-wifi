@@ -44,10 +44,10 @@ void loop() {
     // Server loop
     serverManager.handleClient();
     
-    // Check for any new changes in config
-    if (configManager.checkConfigUpdate()) {
-        config = configManager.getConfig();
-    }
+    // Confirm firmware
+    serverManager.confirmOta(
+        wifiManager.checkConnection(config.wifiConfig.wifiMode)
+    );
 
     // LED debug
     digitalWrite(LED_BUILTIN, HIGH);
