@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "esp_task_wdt.h"
 #include "config.h"
 #include "ConfigTypes.h"
 #include "ConfigManager.h"
@@ -38,6 +39,10 @@ void setup() {
 
     // Log file system memory usage
     flashManager.logFileSystemUsage();
+
+    // Task Watchdog Timer (reset ESP if hanging)
+    esp_task_wdt_init(WATCHDOG_TIMEOUT, true);
+    esp_task_wdt_add(NULL);
 }
 
 void loop() {
@@ -48,6 +53,9 @@ void loop() {
     serverManager.confirmOta(
         wifiManager.checkConnection(config.wifiConfig.wifiMode)
     );
+
+    // Feed watchdog
+    esp_task_wdt_reset();
 
     // LED debug
     digitalWrite(LED_BUILTIN, HIGH);

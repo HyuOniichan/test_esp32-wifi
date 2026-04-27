@@ -9,6 +9,7 @@
 
 // --- ConfigManager
 #define GET_CONFIG_INTERVAL 60000 // 1m
+#define WATCHDOG_TIMEOUT 8 // 8s (watchdog task count in seconds)
 
 // Define all config types
 enum ConfigType: uint8_t {
