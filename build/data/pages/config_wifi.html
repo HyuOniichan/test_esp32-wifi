@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>ESP32 Config</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h2>WiFi Config</h2>
+
+        <label>Mode</label>
+        <select id="selectMode">
+            <option value="STA">STA</option>
+            <option value="AP">AP</option>
+            <option value="DUAL">DUAL</option>
+        </select>
+
+        <label>WiFi Name (SSID)</label>
+        <input type="text" id="ssidInput" placeholder="Enter WiFi name">
+
+        <label>Password</label>
+        <input type="password" id="passInput" placeholder="Enter password">
+
+        <label>MAC Address</label>
+        <input type="text" id="macInput" placeholder="02:11:22:33:44:55">
+
+        <button onclick="connectWiFi()">Connect</button>
+
+    </div>
+
+    <script>
+        function connectWiFi() {
+            const mode = document.getElementById("selectMode").value;
+            const ssid = document.getElementById("ssidInput").value;
+            const pass = document.getElementById("passInput").value;
+            const mac = document.getElementById("macInput").value;
+
+            alert(
+                "Mode: " + mode
+                + "\nSSID: " + ssid
+                + "\nPassword: " + pass
+                + "\nMAC Address: " + mac
+            );
+
+            // Send to ESP32 WebServer
+            fetch("/api/wifi", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mode, ssid, pass, mac }),
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    alert(data.status || "OK");
+                });
+        }
+    </script>
+
+</body>
+
+</html>
