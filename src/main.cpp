@@ -35,6 +35,9 @@ void setup() {
 
     // Webserver
     serverManager.begin();
+
+    // Log file system memory usage
+    flashManager.logFileSystemUsage();
 }
 
 void loop() {

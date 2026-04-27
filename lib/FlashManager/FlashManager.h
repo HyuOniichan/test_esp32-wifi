@@ -49,6 +49,9 @@ public:
 
     // Mount file system (before init server in AP mode)
     void mountFileSystem();
+
+    // Check file system usage
+    void logFileSystemUsage();
 };
 
 extern FlashManager flashManager;

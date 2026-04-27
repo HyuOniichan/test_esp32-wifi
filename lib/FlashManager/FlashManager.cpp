@@ -7,5 +7,12 @@ void FlashManager::mountFileSystem() {
     }
 }
 
+void FlashManager::logFileSystemUsage() {
+    size_t total = LittleFS.totalBytes();
+    size_t used = LittleFS.usedBytes();
+
+    Serial.printf("[DEBUG] LittleFS: %d / %d\n", used, total);
+}
+
 // Extern
 FlashManager flashManager;
